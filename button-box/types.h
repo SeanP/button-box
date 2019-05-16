@@ -10,7 +10,7 @@ enum InputType {
 };
 
 struct EncoderConfig {
-    byte bits;
+    u_int8_t bits;
 };
 
 struct LocationConfiguration {
@@ -19,11 +19,11 @@ struct LocationConfiguration {
 };
 
 struct MatrixConfig {
-    byte rows;
-    byte columns;
+    u_int8_t rows;
+    u_int8_t columns;
 
-    byte *rowPins;
-    byte *columnPins;
+    u_int8_t *rowPins;
+    u_int8_t *columnPins;
 
     /* This is an ordered list in row->column order.
      * 
@@ -37,35 +37,8 @@ struct MatrixConfig {
 };
 
 struct ButtonBoxConfig { 
-    byte numMatrixes;
-    MatrixConfig *matrixConfigs;
+    u_int8_t numMatrixes;
+    MatrixConfig **matrixConfigs;
 };
-
-byte getButtonCountForLocation(LocationConfiguration lc) {
-    switch(lc.inputType) {
-        case BUTTON:
-            return 1;
-        case INCREMENTAL_ENCODER:
-            return 2;
-        case GRAY_ENCODER:
-        case BINARY_ENCODER:
-            return 1 << (lc.encoderConfig->bits);
-        case NOT_CONNECTED:
-        default:
-            return 0;
-    }
-}
-
-byte getOffsetForLocation(LocationConfiguration lc) {
-    switch(lc.inputType) {
-        case INCREMENTAL_ENCODER:
-            return 1;
-        case GRAY_ENCODER:
-        case BINARY_ENCODER:
-            return lc.encoderConfig->bits - 1;
-        default:
-            return 0;
-    }
-}
 
 #endif
