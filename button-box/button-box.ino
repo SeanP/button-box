@@ -28,11 +28,19 @@ u_int8_t GRAY_CODES[] = {
 };
 
 int ledState = HIGH;
-const int UPDATE_HERTZ = 2;
+const int UPDATE_HERTZ = 125;
 const u_int8_t LED_PIN = 13;
 const u_int8_t IRACING_BUTTON_LIMIT = 48;
 
 // #define BUTTON_BOX_DEBUG
+
+#ifdef BUTTON_BOX_DEBUG
+#define log(arg) Serial.print(arg)
+#define logln(arg) Serial.println(arg)
+#else
+#define log(arg)
+#define logln(arg)
+#endif
 
 void setup() {
 #ifdef BUTTON_BOX_DEBUG
@@ -42,38 +50,38 @@ void setup() {
     }
 #endif
 
-    Serial.println("Fetching config");
+    logln("Fetching config");
     buttonBoxConfig = getButtonBoxConfig();
 
     nodes = (u_int8_t**) malloc(sizeof(u_int8_t*) * buttonBoxConfig->numMatrixes);
     shadowNodes = (u_int8_t**) malloc(sizeof(u_int8_t*) * buttonBoxConfig->numMatrixes);
     numLocations = (u_int8_t*) malloc(sizeof(u_int8_t) * buttonBoxConfig->numMatrixes);
 
-    Serial.println("Initialized buffers");
+    logln("Initialized buffers");
 
     for (u_int8_t i=0; i < buttonBoxConfig->numMatrixes; ++i) {
         MatrixConfig *mc = buttonBoxConfig->matrixConfigs[i];
         numLocations[i] = 0;
 
-        Serial.println("Got matrix");
+        logln("Got matrix");
 
         u_int8_t buttonsInMatrix = 0;
         
         for (u_int8_t rowNum = 0; rowNum < mc->rows; ++rowNum) {
             pinMode(mc->rowPins[rowNum], INPUT_PULLUP);
-            Serial.print("Configure pin as INPUT_PULLUP: ");
-            Serial.println(mc->rowPins[rowNum]);
+            log("Configure pin as INPUT_PULLUP: ");
+            logln(mc->rowPins[rowNum]);
         }
 
-        Serial.println("Finished row pin initialization");
+        logln("Finished row pin initialization");
 
         for (u_int8_t columnNum = 0; columnNum < mc->columns; ++columnNum) {
             pinMode(mc->columnPins[columnNum], INPUT);
-            Serial.print("Configure pin as INPUT: ");
-            Serial.println(mc->columnPins[columnNum]);
+            log("Configure pin as INPUT: ");
+            logln(mc->columnPins[columnNum]);
         }
 
-        Serial.println("Finished column pin initialization");
+        logln("Finished column pin initialization");
 
         u_int8_t numNodes = mc->rows * mc->columns;
         for (u_int8_t nodeNum=0; nodeNum < numNodes; ++nodeNum) {
@@ -85,19 +93,19 @@ void setup() {
             ++numLocations[i];
         }
 
-        Serial.print("Counted the buttons in the matrix: ");
-        Serial.println(buttonsInMatrix);
+        log("Counted the buttons in the matrix: ");
+        logln(buttonsInMatrix);
 
         numButtons += buttonsInMatrix;
         nodes[i] = (u_int8_t*) (malloc(sizeof(u_int8_t) * buttonsInMatrix));
         shadowNodes[i] = (u_int8_t*) (malloc(sizeof(u_int8_t) * buttonsInMatrix));
     }
 
-    Serial.println("Initialized matrixes.");
+    logln("Initialized matrixes.");
 
 #ifdef BUTTON_BOX_DEBUG
     if (IRACING_BUTTON_LIMIT < numButtons) {
-        Serial.println("Too many buttons configured!");
+        logln("Too many buttons configured!");
     }
 #endif
 
@@ -120,22 +128,22 @@ void loop() {
     }
     previousMillis = currentMillis;
 
-    Serial.println("===================================");
+    logln("===================================");
     updateState();
     buildUpdate();
 
     Joystick.send_now();
 
     swapNodeBuffers();
-    Serial.print("Time=");
-    Serial.print(millis()-currentMillis);
-    Serial.println("ms");
+    log("Time=");
+    log(millis()-currentMillis);
+    logln("ms");
 }
 
 void updateState() {
     for (u_int8_t matrixNum=0; matrixNum < buttonBoxConfig->numMatrixes; ++matrixNum) {
-        Serial.print("Matrix:\t");
-        Serial.println(matrixNum);
+        log("Matrix:\t");
+        logln(matrixNum);
         MatrixConfig *mc = buttonBoxConfig->matrixConfigs[matrixNum];
         readMatrix(mc, nodes[matrixNum]);
     }
@@ -156,12 +164,12 @@ void readMatrix(MatrixConfig *mc, u_int8_t* matrixKeys) {
             pinMode(colPin, INPUT_PULLUP);
             delayMicroseconds(10);
             matrixKeys[keyPos] = 1^digitalRead(colPin);
-            Serial.print("Row[");
-            Serial.print(rowIndex);
-            Serial.print("], Column[");
-            Serial.print(colIndex);
-            Serial.print("] reads as ");
-            Serial.println(matrixKeys[keyPos]);
+            log("Row[");
+            log(rowIndex);
+            log("], Column[");
+            log(colIndex);
+            log("] reads as ");
+            logln(matrixKeys[keyPos]);
             ++keyPos;
             pinMode(colPin, INPUT);
         }
@@ -182,18 +190,18 @@ void buildUpdate() {
             LocationConfiguration *lc = &(mc->locationConfiguration[locationNum]);
             switch (lc->inputType) {
                 case BUTTON:
-                    Serial.print("Node[");
-                    Serial.print(nodeNum);
-                    Serial.print("]\tbutton state\tnew: ");
-                    Serial.print(node[nodeNum]);
-                    Serial.print("\told: ");
-                    Serial.println(shadowNode[nodeNum]);
+                    log("Node[");
+                    log(nodeNum);
+                    log("]\tbutton state\tnew: ");
+                    log(node[nodeNum]);
+                    log("\told: ");
+                    logln(shadowNode[nodeNum]);
                     if (node[nodeNum] != shadowNode[nodeNum]) {
-                        Serial.print("*** UPDATE BUTTON ");
-                        Serial.print(nodeNum);
-                        Serial.print(" TO NEW STATE ");
-                        Serial.print(node[nodeNum]);
-                        Serial.println(" ***");
+                        log("*** UPDATE BUTTON ");
+                        log(nodeNum);
+                        log(" TO NEW STATE ");
+                        log(node[nodeNum]);
+                        logln(" ***");
                         Joystick.button(buttonPos + 1, node[nodeNum]);
                     }
                     break;
@@ -213,7 +221,7 @@ void buildUpdate() {
                                 Joystick.button(buttonPos + 1, 1);
                                 Joystick.button(buttonPos + 2, 0);
                             } else {
-                                Serial.println("UNHANDLED DIRECTION");
+                                logln("UNHANDLED DIRECTION");
                             }
                         }
                     }
