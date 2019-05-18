@@ -9,13 +9,9 @@ enum InputType {
     BINARY_ENCODER // NOT IMPLEMENTED
 };
 
-struct EncoderConfig {
-    u_int8_t bits;
-};
-
 struct LocationConfiguration {
     InputType inputType;
-    EncoderConfig *encoderConfig;
+    u_int8_t encoderBits;
 };
 
 struct MatrixConfig {
