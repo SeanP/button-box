@@ -10,30 +10,28 @@ LocationConfiguration *allocLC(u_int8_t rows, u_int8_t columns) {
 
 ButtonBoxConfig *getButtonBoxConfig() {
     ButtonBoxConfig *buttonBoxConfig = (ButtonBoxConfig*) malloc(sizeof(ButtonBoxConfig));
-    buttonBoxConfig->numMatrixes = 2;
+    buttonBoxConfig->numMatrixes = 1;
     buttonBoxConfig->matrixConfigs = (MatrixConfig**) malloc(sizeof(MatrixConfig*));
 
-    MatrixConfig *matrixConfig = (MatrixConfig*) malloc(2 * sizeof(MatrixConfig));
-    matrixConfig[0].rows = 1;
+    MatrixConfig *matrixConfig = (MatrixConfig*) malloc(buttonBoxConfig->numMatrixes * sizeof(MatrixConfig));
+    matrixConfig[0].rows = 4;
     matrixConfig[0].columns = 4;
-    matrixConfig[1].rows = 1;
-    matrixConfig[1].columns = 4;
     
     u_int8_t *rowPins = (u_int8_t*) malloc(matrixConfig->rows * sizeof(u_int8_t));
-    rowPins[0] = 31;
-    rowPins[1] = 32;
-    matrixConfig[0].rowPins = &(rowPins[0]);
-    matrixConfig[1].rowPins = &(rowPins[1]);
+    rowPins[0] = 17;
+    rowPins[1] = 16;
+    rowPins[2] = 15;
+    rowPins[3] = 14;
+    matrixConfig[0].rowPins = rowPins;
 
     u_int8_t *columnPins = (u_int8_t*) malloc(matrixConfig->columns * sizeof(u_int8_t));
-    columnPins[0] = 36;
-    columnPins[1] = 35;
-    columnPins[2] = 34;
-    columnPins[3] = 33;
+    columnPins[0] = 21;
+    columnPins[1] = 20;
+    columnPins[2] = 19;
+    columnPins[3] = 18;
     matrixConfig[0].columnPins = columnPins;
-    matrixConfig[1].columnPins = columnPins;
 
-    LocationConfiguration *lc = allocLC(5, 1);
+    LocationConfiguration *lc = allocLC(13, 1);
     lc[0].inputType = GRAY_ENCODER;
     lc[0].encoderBits = 4;
 
@@ -41,13 +39,18 @@ ButtonBoxConfig *getButtonBoxConfig() {
     lc[2].inputType = BUTTON;
     lc[3].inputType = BUTTON;
     lc[4].inputType = BUTTON;
-    // lc[1].inputType = BUTTON;
+    lc[5].inputType = BUTTON;
+    lc[6].inputType = BUTTON;
+    lc[7].inputType = BUTTON;
+    lc[8].inputType = BUTTON;
+    lc[9].inputType = BUTTON;
+    lc[10].inputType = BUTTON;
+    lc[11].inputType = BUTTON;
+    lc[12].inputType = BUTTON;
 
-    matrixConfig[0].locationConfiguration = & (lc[0]);
-    matrixConfig[1].locationConfiguration = & (lc[1]);
-    
-    buttonBoxConfig->matrixConfigs[0] = &matrixConfig[0];
-    buttonBoxConfig->matrixConfigs[1] = &matrixConfig[1];
+    matrixConfig[0].locationConfiguration = lc;
+
+    buttonBoxConfig->matrixConfigs[0] = matrixConfig;
 
     return buttonBoxConfig;
 }
