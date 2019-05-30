@@ -8,6 +8,8 @@ u_int8_t **shadowNodes;
 u_int8_t numButtons = 0;
 u_int8_t *numLocations;
 
+u_int8_t **locationDwellFrames;
+
 u_int8_t GRAY_CODES[] = {
     0,  // 0
     1,  // 1
@@ -56,6 +58,7 @@ void setup() {
     nodes = (u_int8_t**) malloc(sizeof(u_int8_t*) * buttonBoxConfig->numMatrixes);
     shadowNodes = (u_int8_t**) malloc(sizeof(u_int8_t*) * buttonBoxConfig->numMatrixes);
     numLocations = (u_int8_t*) malloc(sizeof(u_int8_t) * buttonBoxConfig->numMatrixes);
+    locationDwellFrames = (u_int8_t**) malloc(sizeof(u_int8_t*) * buttonBoxConfig->numMatrixes);
 
     logln("Initialized buffers");
 
@@ -99,6 +102,11 @@ void setup() {
         numButtons += buttonsInMatrix;
         nodes[i] = (u_int8_t*) (malloc(sizeof(u_int8_t) * buttonsInMatrix));
         shadowNodes[i] = (u_int8_t*) (malloc(sizeof(u_int8_t) * buttonsInMatrix));
+        locationDwellFrames[i] = (u_int8_t*) malloc(sizeof(u_int8_t) * numLocations[i]);
+
+        for (u_int8_t locNum = 0; locNum < numLocations[i]; ++locNum) {
+            locationDwellFrames[i][locNum] = 0;
+        }
     }
 
     logln("Initialized matrixes.");
@@ -228,9 +236,11 @@ void buildUpdate() {
                     break;
                 case GRAY_ENCODER:
                     {
-                        // Reset it.
-                        for (u_int8_t i = 0; i < getButtonCountForLocation(lc); ++i) {
-                            Joystick.button(buttonPos + 1 + i, 0);
+                        if (0 == --locationDwellFrames[matrixNum][locationNum]) {
+                            // Reset it.
+                            for (u_int8_t i = 0; i < getButtonCountForLocation(lc); ++i) {
+                                Joystick.button(buttonPos + 1 + i, 0);
+                            }
                         }
 
                         u_int8_t currentLocation = resolveGrayCode(&node[nodeNum]);
@@ -238,6 +248,15 @@ void buildUpdate() {
 
                         // If it moved, hit the switch
                         if (currentLocation != oldLocation) {
+                            // Reset the encoder.
+                            for (u_int8_t i = 0; i < getButtonCountForLocation(lc); ++i) {
+                                Joystick.button(buttonPos + 1 + i, 0);
+                            }
+
+                            // Set dwell time.
+                            locationDwellFrames[matrixNum][locationNum] = 5;
+
+                            // Hit the button.
                             Joystick.button(buttonPos + 1 + currentLocation, 1);
                         }
                     }
